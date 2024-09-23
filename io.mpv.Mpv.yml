@@ -88,6 +88,3 @@ modules:
           - mkdir -p /app/share/appdata
           - mv $FLATPAK_ID.appdata.xml /app/share/appdata/$FLATPAK_ID.appdata.xml
           - chmod 644 /app/share/appdata/$FLATPAK_ID.appdata.xml
-      - type: shell
-        commands:
-          - sed -i "s/#if (GLSLANG_VERSION_MAJOR \* 1000 + GLSLANG_VERSION_MINOR)/#if 0/" subprojects/libplacebo/src/glsl/glslang.cc
