@@ -3,18 +3,19 @@
  1 file changed, 4 insertions(+)
 
 diff --git a/src/luaconf.h b/src/luaconf.h
-index e63a718..b15ae4e 100644
+index 1cf3a03c..39f081b5 100644
 --- a/src/luaconf.h
 +++ b/src/luaconf.h
-@@ -168,7 +168,11 @@
- 
+@@ -134,8 +134,12 @@
+ #define LUA_API		__declspec(dllimport)
+ #endif
  #else
- 
 +#if defined(LUA_CORE) || defined(LUA_LIB)
 +#define LUA_API		__attribute__((visibility("default"))) extern
 +#else
  #define LUA_API		extern
+ #endif
 +#endif
  
- #endif
+ #define LUALIB_API	LUA_API
  

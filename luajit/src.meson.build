@@ -1,0 +1,232 @@
+cc = meson.get_compiler('c')
+
+libm = cc.find_library('m')
+libdl = cc.find_library('dl')
+
+minilua = executable(
+    'minilua',
+    'host/minilua.c',
+    dependencies: libm,
+    native: true
+)
+
+luajit_h = custom_target(
+    output: 'luajit.h',
+    input: 'luajit_rolling.h',
+    command: [
+        '/bin/sh',
+        '-ec',
+        'exec sed -e "s/ROLLING/`git show -s --format=%ct`/" -e "s|#error|//|" "@INPUT@"'
+    ],
+    capture: true,
+    build_always_stale: true
+)
+
+buildvm_arch_h = custom_target(
+    output: 'buildvm_arch.h',
+    input: ['../dynasm/dynasm.lua', 'vm_x86.dasc'],
+    command: [
+        minilua,
+        '@INPUT0@',
+        '-D',
+        'ENDIAN_LE',
+        '-D',
+        'P64',
+        '-D',
+        'FFI',
+        '-D',
+        'FPU',
+        '-D',
+        'HFABI',
+        '-D',
+        'VER=',
+        '-o',
+        '@OUTPUT@',
+        '@INPUT1@'
+    ]
+)
+
+buildvm = executable(
+    'buildvm',
+    [
+        luajit_h,
+        buildvm_arch_h,
+        'host/buildvm.c',
+        'host/buildvm_asm.c',
+        'host/buildvm_peobj.c',
+        'host/buildvm_lib.c',
+        'host/buildvm_fold.c',
+    ],
+    c_args: [
+        '-DLUAJIT_DISABLE_JIT',
+        '-DLUAJIT_DISABLE_GC64',
+        '-DLUAJIT_TARGET=LUAJIT_ARCH_x64',
+        '-DLJ_ARCH_HASFPU=1',
+        '-DLJ_ABI_SOFTFP=0'
+    ],
+    native: true
+)
+lib_src = [
+    'lib_base.c',
+    'lib_math.c',
+    'lib_bit.c',
+    'lib_string.c',
+    'lib_table.c',
+    'lib_io.c',
+    'lib_os.c',
+    'lib_package.c',
+    'lib_debug.c',
+    'lib_jit.c',
+    'lib_ffi.c',
+    'lib_buffer.c'
+]
+
+elfasm = custom_target(
+    output: 'lj_vm.S',
+    command: [
+        buildvm,
+        '-m',
+        'elfasm',
+        '-o',
+        '@OUTPUT@'
+    ]
+)
+
+ffdef = custom_target(
+    output: 'lj_ffdef.h',
+    input: lib_src,
+    command: [
+        buildvm,
+        '-m',
+        'ffdef',
+        '-o',
+        '@OUTPUT@',
+        '@INPUT@'
+    ]
+)
+
+bcdef = custom_target(
+    output: 'lj_bcdef.h',
+    input: lib_src,
+    command: [
+        buildvm,
+        '-m',
+        'bcdef',
+        '-o',
+        '@OUTPUT@',
+        '@INPUT@'
+    ]
+)
+
+libdef = custom_target(
+    output: 'lj_libdef.h',
+    input: lib_src,
+    command: [
+        buildvm,
+        '-m',
+        'libdef',
+        '-o',
+        '@OUTPUT@',
+        '@INPUT@'
+    ]
+)
+
+luajit = library(
+    'luajit',
+    [
+        luajit_h,
+        elfasm,
+        ffdef,
+        bcdef,
+        libdef,
+        'lj_assert.c',
+        'lj_gc.c',
+        'lj_err.c',
+        'lj_char.c',
+        'lj_bc.c',
+        'lj_obj.c',
+        'lj_buf.c',
+        'lj_str.c',
+        'lj_tab.c',
+        'lj_func.c',
+        'lj_udata.c',
+        'lj_meta.c',
+        'lj_debug.c',
+        'lj_prng.c',
+        'lj_state.c',
+        'lj_dispatch.c',
+        'lj_vmevent.c',
+        'lj_vmmath.c',
+        'lj_strscan.c',
+        'lj_strfmt.c',
+        'lj_strfmt_num.c',
+        'lj_serialize.c',
+        'lj_api.c',
+        'lj_profile.c',
+        'lj_lex.c',
+        'lj_parse.c',
+        'lj_bcread.c',
+        'lj_bcwrite.c',
+        'lj_load.c',
+        'lj_ir.c',
+        'lj_opt_mem.c',
+        'lj_opt_fold.c',
+        'lj_opt_narrow.c',
+        'lj_opt_dce.c',
+        'lj_opt_loop.c',
+        'lj_opt_split.c',
+        'lj_opt_sink.c',
+        'lj_mcode.c',
+        'lj_snap.c',
+        'lj_record.c',
+        'lj_crecord.c',
+        'lj_ffrecord.c',
+        'lj_asm.c',
+        'lj_trace.c',
+        'lj_gdbjit.c',
+        'lj_ctype.c',
+        'lj_cdata.c',
+        'lj_cconv.c',
+        'lj_ccall.c',
+        'lj_ccallback.c',
+        'lj_carith.c',
+        'lj_clib.c',
+        'lj_cparse.c',
+        'lj_lib.c',
+        'lj_alloc.c',
+        'lib_aux.c',
+        'lib_base.c',
+        'lib_math.c',
+        'lib_bit.c',
+        'lib_string.c',
+        'lib_table.c',
+        'lib_io.c',
+        'lib_os.c',
+        'lib_package.c',
+        'lib_debug.c',
+        'lib_jit.c',
+        'lib_ffi.c',
+        'lib_buffer.c',
+        'lib_init.c'
+    ],
+    c_args: [
+        '-DLUAJIT_DISABLE_JIT',
+        '-DLUAJIT_DISABLE_GC64',
+        '-D_FILE_OFFSET_BITS=64',
+        '-D_LARGEFILE_SOURCE',
+        '-D_XOPEN_SOURCE=500',
+        '-DLUA_MULTILIB="lib"',
+        '-DLUA_LJDIR="/app/share/luajit-2.1"',
+        '-DLUAJIT_UNWIND_EXTERNAL'
+    ],
+    dependencies: [libm, libdl],
+    gnu_symbol_visibility: 'hidden',
+    install: true
+)
+
+luajit_dep = declare_dependency(
+    link_with: luajit,
+    include_directories: '.'
+)
+
+meson.override_dependency('luajit', luajit_dep)
