@@ -38,11 +38,11 @@ modules:
       - -Dcpp_eh=none
       - -Dcpp_rtti=false
     build-options:
-      cflags: ''
+      cflags: -march=native
       cflags-override: true
       cppflags: ''
       cppflags-override: true
-      cxxflags: ''
+      cxxflags: -march=native
       cxxflags-override: true
       ldflags: ''
       ldflags-override: true
