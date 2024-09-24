@@ -24,6 +24,10 @@ finish-args:
   - --filesystem=home:ro
   - --filesystem=xdg-run/pipewire-0:ro
 
+cleanup:
+  - '*.la'
+  - '*.a'
+
 modules:
   - name: mpv
     buildsystem: meson
