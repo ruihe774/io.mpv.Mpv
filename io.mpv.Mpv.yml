@@ -68,16 +68,7 @@ modules:
           type: git
           tag-pattern: ^(\d\.\d{1,3}\.\d{1,2})$
       - type: file
-        path: io.mpv.Mpv.appdata.xml
-      # Automatically update version and date in io.mpv.Mpv.appdata.xml
-      # Then install io.mpv.Mpv.appdata.xml
+        path: io.mpv.Mpv.metainfo.xml
       - type: shell
         commands:
-          - sed -i "s/date=\"[0-9-]*\"/date=\"$(git log -n1 --pretty=format:%ad --date=short
-            VERSION)\"/" io.mpv.Mpv.appdata.xml
-          - sed -i "s/version=\"[0-9.]*\"/version=\"$(cat VERSION)\"/" io.mpv.Mpv.appdata.xml
-          # This doesn't find the file.
-          # - install -D -m644 $FLATPAK_ID.appdata.xml /app/share/appdata/$FLATPAK_ID.appdata.xml
-          - mkdir -p /app/share/appdata
-          - mv $FLATPAK_ID.appdata.xml /app/share/appdata/$FLATPAK_ID.appdata.xml
-          - chmod 644 /app/share/appdata/$FLATPAK_ID.appdata.xml
+          - install -Dm644 io.mpv.Mpv.metainfo.xml /app/share/metainfo/io.mpv.Mpv.metainfo.xml
