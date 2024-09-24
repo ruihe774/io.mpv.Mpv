@@ -1,0 +1,20 @@
+---
+ src/luaconf.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/luaconf.h b/src/luaconf.h
+index e63a718..b15ae4e 100644
+--- a/src/luaconf.h
++++ b/src/luaconf.h
+@@ -168,7 +168,11 @@
+ 
+ #else
+ 
++#if defined(LUA_CORE) || defined(LUA_LIB)
++#define LUA_API		__attribute__((visibility("default"))) extern
++#else
+ #define LUA_API		extern
++#endif
+ 
+ #endif
+ 
