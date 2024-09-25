@@ -32,25 +32,13 @@ modules:
   - name: mpv
     buildsystem: meson
     config-opts:
-      - -Dbuild-date=false
-      - -Dmanpage-build=disabled
-      - -Dlua=luajit
-      - -Dbuildtype=release
+      - -Dbuildtype=plain
       - -Ddefault_library=static
-      - -Db_lto=true
-      - -Db_ndebug=true
-      - -Db_pie=true
-      - -Dcpp_rtti=false
+      - -Dbuild-date=false
+      - -Dlua=luajit
     build-options:
-      cflags: -march=native
-      cflags-override: true
-      cppflags: ''
-      cppflags-override: true
-      cxxflags: -march=native
-      cxxflags-override: true
-      ldflags: ''
-      ldflags-override: true
-      strip: true
+      cflags: -march=x86-64-v3 -flto=auto -fno-fat-lto-objects
+      cxxflags: -march=x86-64-v3 -flto=auto -fno-fat-lto-objects
     cleanup:
       - /include
       - /lib/pkgconfig
